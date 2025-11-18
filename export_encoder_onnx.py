@@ -95,7 +95,7 @@ def load_model():
     m.eval()
 
     print("loading state dict")
-    state_dict = torch.load("./model_state_dict.pt", map_location="cpu")
+    state_dict = torch.load("./model.pt", map_location="cpu")
     if "state_dict" in state_dict:
         state_dict = state_dict["state_dict"]
 
