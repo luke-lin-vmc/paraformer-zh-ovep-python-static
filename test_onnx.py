@@ -6,6 +6,7 @@ import onnxruntime as ort
 import librosa
 import torch
 import numpy as np
+import json
 
 
 class SinusoidalPositionEncoder(torch.nn.Module):
@@ -76,12 +77,8 @@ def compute_feat(filename):
 
 
 def load_tokens():
-    ans = dict()
-    i = 0
-    with open("tokens.txt", encoding="utf-8") as f:
-        for line in f:
-            ans[i] = line.strip().split()[0]
-            i += 1
+    with open("tokens.json", encoding="utf-8") as f:
+        ans = json.load(f)
     return ans
 
 
@@ -220,13 +217,31 @@ def get_acoustic_embedding(alpha: np.array, hidden: np.array):
     return embeddings
 
 
+lfr_window_size = 7
+lfr_window_shift = 6
+
+def get_num_input_frames(input_len_in_seconds):
+    num_frames = input_len_in_seconds * 100
+    print("num_frames", num_frames)
+
+    # num_input_frames is an approximate number
+    num_input_frames = int(num_frames / lfr_window_shift + 0.5)
+    print("num_input_frames", num_input_frames)
+    return num_input_frames
+
+
 def main():
-    features = compute_feat("./1.wav")
-    print("here", features.shape, features.shape[0] > 83)
-    if features.shape[0] >= 83:
-        features = features[:83]
+    features = compute_feat("./asr_example.wav")
+    input_len_in_seconds = 5
+    target_len = get_num_input_frames(input_len_in_seconds)   
+    print("here", features.shape, features.shape[0] > target_len)
+    if features.shape[0] >= target_len:
+        features = features[:target_len]
     else:
-        padding = features[-(83 - features.shape[0]) :]
+        pad_len = target_len - features.shape[0]
+        # make zeros with same dtype and remaining dimensions
+        pad_shape = (pad_len, *features.shape[1:])
+        padding = np.zeros(pad_shape, dtype=features.dtype)
         print("padding", features.shape, padding.shape)
         features = np.concatenate([features, padding])
 
@@ -255,14 +270,14 @@ def main():
     print("acoustic_embedding.shape", acoustic_embedding.shape)
     num_tokens = acoustic_embedding.shape[0]
 
-    padding = np.zeros((83 - acoustic_embedding.shape[0], 512), dtype=np.float32)
+    padding = np.zeros((target_len - acoustic_embedding.shape[0], 512), dtype=np.float32)
     print("padding.shape", padding.shape, acoustic_embedding.shape)
 
     acoustic_embedding = np.concatenate([acoustic_embedding, padding], axis=0)
     print("acoustic_embedding.shape", acoustic_embedding.shape)
     print("acoustic_embedding.sum", acoustic_embedding.sum(), acoustic_embedding.mean())
 
-    mask = np.zeros((83,), dtype=np.float32)
+    mask = np.zeros((target_len,), dtype=np.float32)
     mask[:num_tokens] = 1
     print(mask)
 
