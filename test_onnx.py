@@ -1,12 +1,45 @@
 #!/usr/bin/env python3
 # Copyright (c)  2025  Xiaomi Corporation
 
+import argparse
 import kaldi_native_fbank as knf
 import onnxruntime as ort
 import librosa
 import torch
 import numpy as np
 import json
+from export_encoder_onnx import get_num_input_frames
+
+# Add openvino libs to path as onnxruntime_providers_openvino.dll depends on openvino.dll. See https://github.com/intel/onnxruntime/releases/
+import onnxruntime.tools.add_openvino_win_libs as utils
+utils.add_openvino_libs_to_path()
+
+def get_args():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    parser.add_argument(
+        "--input-len-in-seconds",
+        type=int,
+        required=True,
+        help="""RKNN does not support dynamic shape, so we need to hard-code
+        how long the model can process.
+        """,
+    )
+
+    parser.add_argument(
+        "--device",
+        type=str,
+        help="Execution device. Use 'CPU', 'GPU', 'NPU' for OpenVINO. If not specified, ORT CPU will be used by default."
+    )
+
+    parser.add_argument(
+        "sound_file",
+        type=str,
+        help="Path to the test wave",
+    )
+    return parser.parse_args()
 
 
 class SinusoidalPositionEncoder(torch.nn.Module):
@@ -83,32 +116,53 @@ def load_tokens():
 
 
 class OnnxModel:
-    def __init__(self):
+    def __init__(self, device: str, input_len_in_seconds: int):
         session_opts = ort.SessionOptions()
         session_opts.inter_op_num_threads = 1
         session_opts.intra_op_num_threads = 1
 
         self.session_opts = session_opts
+        self.device = device
+        self.input_len_in_seconds = input_len_in_seconds
+        
+        if device in ["CPU", "GPU", "NPU"]:
+            print(f"Device: OpenVINO EP with device = {device}")
+            providers = ['OpenVINOExecutionProvider']
+            provider_options = [{"device_type": device}]
+            
+            # For NPU device, OpenVINO typically benefits from caching
+            if device == "NPU":
+                 provider_options[0]["cache_dir"] = "cache"
+        else:
+            print("Device: Using Default CPU Executor.")
+            providers = ["CPUExecutionProvider"]
+            provider_options = None
 
-        print("init encoder")
+        model_path = f"./encoder-{input_len_in_seconds}-seconds.onnx"
+        print(f"init encoder: {model_path}")
         self.encoder = ort.InferenceSession(
-            "./encoder-5-seconds.onnx",
+            model_path,
             sess_options=self.session_opts,
-            providers=["CPUExecutionProvider"],
+            providers=providers,
+            provider_options=provider_options
         )
 
-        print("init decoder")
+        model_path = f"./decoder-{input_len_in_seconds}-seconds.onnx"
+        print(f"init decoder: {model_path}")
         self.decoder = ort.InferenceSession(
-            "./decoder-5-seconds.onnx",
+            model_path,
             sess_options=self.session_opts,
-            providers=["CPUExecutionProvider"],
+            providers=providers,
+            provider_options=provider_options
         )
 
-        print("init predictor")
+        model_path = f"./predictor-{input_len_in_seconds}-seconds.onnx"
+        print(f"init predictor: {model_path}")
         self.predictor = ort.InferenceSession(
-            "./predictor-5-seconds.onnx",
+            model_path,
             sess_options=self.session_opts,
-            providers=["CPUExecutionProvider"],
+            providers=providers,
+            provider_options=provider_options
         )
 
         print("---encoder---")
@@ -217,23 +271,17 @@ def get_acoustic_embedding(alpha: np.array, hidden: np.array):
     return embeddings
 
 
-lfr_window_size = 7
-lfr_window_shift = 6
-
-def get_num_input_frames(input_len_in_seconds):
-    num_frames = input_len_in_seconds * 100
-    print("num_frames", num_frames)
-
-    # num_input_frames is an approximate number
-    num_input_frames = int(num_frames / lfr_window_shift + 0.5)
-    print("num_input_frames", num_input_frames)
-    return num_input_frames
-
-
 def main():
-    features = compute_feat("./asr_example.wav")
-    input_len_in_seconds = 5
+    args = get_args()
+
+    device = None
+    if args.device is not None:
+        device = args.device.upper()
+
+    input_len_in_seconds = args.input_len_in_seconds
     target_len = get_num_input_frames(input_len_in_seconds)   
+        
+    features = compute_feat(args.sound_file)
     print("here", features.shape, features.shape[0] > target_len)
     if features.shape[0] >= target_len:
         features = features[:target_len]
@@ -255,7 +303,7 @@ def main():
 
     print("sum", features.sum(), features.mean(), pos_emb.sum(), pos_emb.mean())
 
-    model = OnnxModel()
+    model = OnnxModel(device=device, input_len_in_seconds=input_len_in_seconds)
 
     #  encoder_out = model.run_encoder(features[None], pos_emb[None])
     encoder_out = model.run_encoder(features[None])
