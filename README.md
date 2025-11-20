@@ -71,15 +71,15 @@ Usage: python test_onnx.py --device <DEVICE> --input-len-in-seconds <LENGTH> <so
 
 Run on CPU
 ```
-python test_onnx.py --device CPU --input-len-in-seconds 5 asr_example.wav
+python test_onnx.py --device CPU --input-len-in-seconds 5 1.wav
 ```
 Run on GPU
 ```
-python test_onnx.py --device GPU --input-len-in-seconds 5 asr_example.wav
+python test_onnx.py --device GPU --input-len-in-seconds 5 1.wav
 ```
 Run on NPU
 ```
-python test_onnx.py --device NPU --input-len-in-seconds 5 asr_example.wav
+python test_onnx.py --device NPU --input-len-in-seconds 5 1.wav
 ```
 :warning:[NOTE] The 1st time running on NPU will take long time (about 3 minutes) on model compiling. [OpenVINO Model Caching](https://docs.openvino.ai/2025/openvino-workflow/running-inference/optimize-inference/optimizing-latency/model-caching-overview.html) has been enabled for NPU to ease the issue. This feature will cache compiled models. Although the 1st run still takes long, but later runs can be faster as model compilation has been skipped.
 ## Tested devices
@@ -119,38 +119,14 @@ NodeArg(name='encoder_out', type='tensor(float)', shape=[1, 83, 512])
 -----
 NodeArg(name='alphas', type='tensor(float)', shape=[1, 83])
 features.shape (83, 560)
-[[10.330146  11.28574   11.197521  ... 11.283754  11.682403  11.068745 ]
- [ 8.023468   9.23599   11.084137  ... 11.941153  12.421517  11.915011 ]
- [ 5.4080577  7.2164407  9.937752  ... 13.703872  12.714883  12.267856 ]
- ...
- [14.420621  16.180243  19.120308  ... 12.683482  11.631289  11.296776 ]
- [11.864075  13.517877  16.202063  ... 11.239302  11.938505  11.994032 ]
- [ 8.41748   10.243659  12.98756   ... 11.673848  11.6645775 11.501234 ]]
 encoder_out.shape (1, 83, 512)
 encoder_out.sum 64.594604 0.0015200161
-[[[-0.01406524  0.00265226 -0.00964681 ...  0.01442128 -0.03431666
-    0.00986198]
-  [-0.03563054  0.04568488  0.01158986 ... -0.05193643 -0.06663334
-    0.02791104]
-  [-0.04298359  0.06046052  0.00973543 ... -0.05894379 -0.06061184
-    0.01853588]
-  ...
-  [-0.00860532 -0.00040867 -0.03937218 ...  0.02093086 -0.01048481
-   -0.02408925]
-  [-0.01257268 -0.00773508 -0.03052646 ...  0.02829604  0.00282896
-    0.00458103]
-  [-0.03672801  0.05195791 -0.04131586 ... -0.00337254  0.04668033
-    0.07417187]]]
 alpha.shape (1, 83)
 alpha.sum() 26.999882 0.32529977
 acoustic_embedding.shape (26, 512)
 padding.shape (57, 512) (26, 512)
 acoustic_embedding.shape (83, 512)
 acoustic_embedding.sum 17.41497 0.00040980257
-[1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.
- 1. 1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
- 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
- 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
 decoder_out encoder_out acoustic_embedding
 decoder_out (1, 83, 8404)
 decoder_out.sum 459326.0 0.6585017
@@ -162,7 +138,7 @@ decoder_out.sum 459326.0 0.6585017
 [Full log](https://github.com/luke-lin-vmc/whisper-ovep-python-static/blob/main/log_full.txt) (from scratch) is provided for reference
 
 ## Known issues
-1. The following warning appears when running the pipeline thru OVEP for the 1st time
+The following warning appears when running the pipeline thru OVEP for the 1st time
 ```
 C:\Users\...\site-packages\onnxruntime\capi\onnxruntime_inference_collection.py:123:
 User Warning: Specified provider 'OpenVINOExecutionProvider' is not in available provider names.
@@ -173,5 +149,4 @@ Solution is to simply reinstall ```onnxruntime-openvino```
 pip uninstall -y onnxruntime-openvino
 pip install onnxruntime-openvino
 ```
-2. Only Arc iGPUs (Meteor Lake, Lunar Lake, Panther Lake and Arrow Lake H-series) are supported. Running on unsupported iGPU (such like Iris Xe or UHD) may lead to incorrect output, such as "!!!!!!!!!!!!!!".
 
