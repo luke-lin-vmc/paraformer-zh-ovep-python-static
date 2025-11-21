@@ -21,7 +21,7 @@ def get_args():
         "--input-len-in-seconds",
         type=int,
         required=True,
-        help="""RKNN does not support dynamic shape, so we need to hard-code
+        help="""NPU does not support dynamic shape, so we need to hard-code
         how long the model can process.
         """,
     )
