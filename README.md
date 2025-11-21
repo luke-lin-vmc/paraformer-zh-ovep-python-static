@@ -96,9 +96,11 @@ The pipeline has been verified working on a ```Intel(R) Core(TM) Ultra 7 268V (L
 * ```iGPU: Intel(R) Arc(TM) 140V GPU, driver 32.0.101.8247 (10/22/2025)```
 * ```NPU: Intel(R) AI Boost, driver 32.0.100.4404 (11/7/2025)```
 ### Result
-| Device  | CPU | GPU | NPU |
-|---------|-----|-----|-----|
-| Result  | OK  | OK  | OK  |
+| Sample | CPU | GPU | NPU |
+|--------|-----|-----|-----|
+| 0.wav  | OK  | OK  | OK  |
+| 1.wav  | OK  | OK  | OK  |
+| 2.wav  | OK  | OK  | OK  |
 
 ### Sample log (device is NPU)
 ```
