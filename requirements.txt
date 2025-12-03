@@ -1,6 +1,5 @@
 onnx
 torch==2.8.0
-onnxruntime~=1.23.0
 pyyaml
 kaldi_native_fbank
 librosa
