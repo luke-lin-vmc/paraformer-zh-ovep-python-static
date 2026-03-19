@@ -3,5 +3,5 @@ torch==2.8.0
 pyyaml
 kaldi_native_fbank
 librosa
-onnxruntime-openvino~=1.23.0
-openvino~=2025.3.0
+onnxruntime-openvino~=1.24.1
+openvino~=2025.4.1

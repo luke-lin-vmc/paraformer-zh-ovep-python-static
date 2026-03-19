@@ -92,9 +92,9 @@ python test_onnx.py --device NPU --input-len-in-seconds 5 1.wav
 ```
 :warning:[NOTE] The 1st time running on NPU will take long time (about 3 minutes) on model compiling. [OpenVINO Model Caching](https://docs.openvino.ai/2025/openvino-workflow/running-inference/optimize-inference/optimizing-latency/model-caching-overview.html) has been enabled for NPU to ease the issue. This feature will cache compiled models. Although the 1st run still takes long, but later runs can be faster as model compilation has been skipped.
 ## Tested devices
-The pipeline has been verified working on a ```Intel(R) Core(TM) Ultra 7 268V (Lunar Lake)``` system, with
-* ```iGPU: Intel(R) Arc(TM) 140V GPU, driver 32.0.101.8247 (10/22/2025)```
-* ```NPU: Intel(R) AI Boost, driver 32.0.100.4404 (11/7/2025)```
+The pipeline has been verified working on a ```Intel(R) Core(TM) Ultra 5 238V (Lunar Lake)``` system, with
+* ```iGPU: Intel(R) Arc(TM) 130V GPU (16GB), driver 32.0.101.8247 (10/22/2025)```
+* ```NPU: Intel(R) AI Boost, driver 32.0.100.4621 (2/25/2026)```
 ### Result
 | Sample | CPU | GPU | NPU |
 |--------|-----|-----|-----|
@@ -104,13 +104,13 @@ The pipeline has been verified working on a ```Intel(R) Core(TM) Ultra 7 268V (L
 
 ### Sample log (device is NPU)
 ```
-(openvino_venv) C:\Github\paraformer-zh-ovep-python-static>python test_onnx.py --device NPU --input-len-in-seconds 5 1.wav
+(python313_venv) C:\GitHub\paraformer-zh-ovep-python-static>python test_onnx.py --device NPU --input-len-in-seconds 5 1.wav
 num_frames 500
 num_input_frames 83
 features sum 612931.0 (516, 80)
 here (85, 560) True
 features.shape (83, 560) (83, 560)
-sum 700035.94 15.061014 17006.455 0.36588758
+sum 700035.9 15.061013 17006.455 0.36588758
 Device: OpenVINO EP with device = NPU
 init encoder: ./encoder-5-seconds.onnx
 init decoder: ./decoder-5-seconds.onnx
@@ -143,7 +143,7 @@ acoustic_embedding.sum 17.41497 0.00040980257
  0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
 decoder_out encoder_out acoustic_embedding
 decoder_out (1, 83, 8404)
-decoder_out.sum 459326.0 0.6585017
+decoder_out.sum 459325.97 0.6585016
 [3055, 278, 7404, 6801, 3806, 1680, 6184, 4390, 1409, 7827, 7118, 7404, 991, 6426, 4803, 1074, 2773, 3595, 8069, 2483, 1320, 1980, 6857, 4500, 1383, 2] --> 26
 ['重', '点', '呢', '想', '谈', '三', '个', '问', '题', '首', '先', '呢', '就', '是', '这', '一', '轮', '全', '球', '金', '融', '动', '荡', '表', '现']
 重点呢想谈三个问题首先呢就是这一轮全球金融动荡表现
@@ -160,10 +160,10 @@ Available providers: 'AzureExecutionProvider, CPUExecutionProvider'
 This would be caused by that both ```onnxruntime``` and ```onnxruntime-openvino``` are installed. Solution is to remove both of them then re-install ```onnxruntime-openvino```
 ```
 pip uninstall -y onnxruntime onnxruntime-openvino
-pip install onnxruntime-openvino~=1.23.0
+pip install onnxruntime-openvino~=1.24.1
 ```
 Or simply to re-install ```onnxruntime-openvino``` if you would like to keep ```onnxruntime```
 ```
 pip uninstall -y onnxruntime-openvino
-pip install onnxruntime-openvino~=1.23.0
+pip install onnxruntime-openvino~=1.24.1
 ```
